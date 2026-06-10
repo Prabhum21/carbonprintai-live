@@ -1,5 +1,7 @@
 # 🌱 CarbonWise AI
 
+Live Demo: https://carbonwiseprint.netlify.app/
+
 > **An AI-powered sustainability platform** that helps individuals understand, track, and reduce their carbon footprint through personalized insights, intelligent recommendations, and actionable goals — powered by Google Gemini AI.
 
 Built for **PromptWars 2026 — Main Challenge 3**.
