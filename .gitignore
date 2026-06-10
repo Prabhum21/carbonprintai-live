@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Environment Variables (NEVER commit these)
+.env
+.env.local
+.env.production
+
+# Build output
+frontend/dist/
+
+# Firebase secrets
+.firebaserc
+serviceAccountKey.json
+
+# Misc
+.DS_Store
+*.log
