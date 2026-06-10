@@ -64,7 +64,7 @@ function AIAdvisor() {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container component="main" maxWidth="md">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
           <AutoAwesomeIcon sx={{ color: 'primary.main', fontSize: 36 }} />
@@ -91,6 +91,7 @@ function AIAdvisor() {
           rows={3}
           variant="outlined"
           placeholder="Ask anything — e.g. 'How can I reduce my electricity bill and carbon footprint?'"
+          inputProps={{ 'aria-label': 'Ask AI a question' }}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           sx={{ mb: 2 }}

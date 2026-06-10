@@ -20,8 +20,7 @@ const GEMINI_MODELS = [
 ];
 
 async function callGemini(prompt) {
-  const apiKey = process.env.GEMINI_API_KEY || 'dummy-gemini-api-key';
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   let lastError = null;
 
   for (const modelName of GEMINI_MODELS) {

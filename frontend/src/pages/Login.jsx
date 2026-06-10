@@ -42,7 +42,7 @@ function Login() {
   };
 
   return (
-    <Container maxWidth="xs">
+    <Container component="main" maxWidth="xs">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h5" align="center" mb={1}>

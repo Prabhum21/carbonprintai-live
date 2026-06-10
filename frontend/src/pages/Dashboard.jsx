@@ -112,7 +112,7 @@ function Dashboard() {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container component="main" maxWidth="lg">
       <Typography variant="h4" fontWeight="bold" sx={{ mt: 4, mb: 1 }}>
         📊 Your Carbon Dashboard
       </Typography>

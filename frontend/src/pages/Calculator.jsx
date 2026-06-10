@@ -86,7 +86,7 @@ function Calculator() {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container component="main" maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
           <NatureIcon color="primary" sx={{ fontSize: 36 }} />

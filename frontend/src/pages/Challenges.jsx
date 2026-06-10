@@ -17,7 +17,7 @@ function Challenges() {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container component="main" maxWidth="lg">
       <Box sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
         <Typography variant="h4" gutterBottom>Green Challenges</Typography>
         <Typography variant="subtitle1" color="text.secondary">
@@ -49,6 +49,7 @@ function Challenges() {
                   variant="contained" 
                   fullWidth
                   disabled={challenge.completed}
+                  aria-label={`Mark ${challenge.title} as Done`}
                   onClick={() => handleComplete(challenge.id)}
                 >
                   {challenge.completed ? 'Completed' : 'Mark as Done'}
