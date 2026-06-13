@@ -1,10 +1,20 @@
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
+import { calcScore } from '../utils/carbonCalculator.js';
+import { z } from 'zod';
 
 dotenv.config();
 
 const router = express.Router();
+
+const calculateSchema = z.object({
+  transport: z.string().trim(),
+  electricity: z.union([z.string(), z.number()]),
+  food: z.string().trim(),
+  waste: z.string().trim(),
+  query: z.string().trim().optional()
+});
 
 // ─────────────────────────────────────────
 // Gemini Model Auto-Selector
@@ -19,6 +29,12 @@ const GEMINI_MODELS = [
   'gemini-pro',
 ];
 
+/**
+ * Calls the Gemini API with a given prompt, falling back through multiple models if needed.
+ * @param {string} prompt - The prompt to send to Gemini.
+ * @returns {Promise<string>} The text response from Gemini.
+ * @throws {Error} If all models fail.
+ */
 async function callGemini(prompt) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   let lastError = null;
@@ -43,25 +59,21 @@ async function callGemini(prompt) {
 // ─────────────────────────────────────────
 // Carbon Score Calculation Logic
 // ─────────────────────────────────────────
-const transportScores = { bike: 10, train: 25, bus: 30, car: 70, flight: 100 };
-const foodScores      = { veg: 20, mixed: 50, nonveg: 80 };
-const wasteScores     = { low: 10, medium: 30, high: 50 };
-
-function calcScore({ transport, electricity, food, waste }) {
-  const t = transportScores[transport] || 0;
-  const e = (parseFloat(electricity) || 0) * 0.85;
-  const f = foodScores[food] || 0;
-  const w = wasteScores[waste] || 0;
-  return parseFloat((t + e + f + w).toFixed(2));
-}
+// ─────────────────────────────────────────
+// Carbon Score Calculation Logic extracted to utils
+// ─────────────────────────────────────────
 
 // ─────────────────────────────────────────
 // POST /api/calculate
 // ─────────────────────────────────────────
 router.post('/calculate', (req, res) => {
-  const { transport, electricity, food, waste } = req.body;
-  const score = calcScore({ transport, electricity, food, waste });
-  res.json({ score });
+  try {
+    const { transport, electricity, food, waste } = calculateSchema.parse(req.body);
+    const score = calcScore({ transport, electricity, food, waste });
+    res.json({ score });
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid input parameters' });
+  }
 });
 
 // ─────────────────────────────────────────
@@ -70,7 +82,13 @@ router.post('/calculate', (req, res) => {
 // Returns: { summary, tips[], weeklyPlan[] }
 // ─────────────────────────────────────────
 router.post('/advisor', async (req, res) => {
-  const { transport, electricity, food, waste, query } = req.body;
+  let validatedData;
+  try {
+    validatedData = calculateSchema.parse(req.body);
+  } catch (error) {
+    return res.status(400).json({ error: 'Invalid input parameters' });
+  }
+  const { transport, electricity, food, waste, query } = validatedData;
   const score = calcScore({ transport, electricity, food, waste });
 
   const prompt = query

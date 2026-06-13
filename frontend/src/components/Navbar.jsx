@@ -49,7 +49,7 @@ function Navbar() {
 
   return (
     <AppBar position="sticky" color="primary" elevation={2}>
-      <Toolbar>
+      <Toolbar component="nav" aria-label="Main Navigation">
         {/* Logo */}
         <GrassIcon sx={{ mr: 1.5 }} />
         <Typography
@@ -83,7 +83,15 @@ function Navbar() {
 
               {/* Avatar with dropdown menu */}
               <Tooltip title="Account options">
-                <IconButton id="user-avatar-btn" onClick={handleMenuOpen} sx={{ p: 0 }}>
+                <IconButton
+                  id="user-avatar-btn"
+                  aria-label="Account options"
+                  aria-controls={menuOpen ? 'user-menu' : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={menuOpen ? 'true' : undefined}
+                  onClick={handleMenuOpen}
+                  sx={{ p: 0 }}
+                >
                   {user.photoURL ? (
                     <Avatar
                       src={user.photoURL}

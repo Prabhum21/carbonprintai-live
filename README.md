@@ -34,6 +34,14 @@ Built for **PromptWars 2026 — Main Challenge 3**.
 
 ---
 
+## 📚 Documentation
+
+- [Security Policy](SECURITY.md)
+- [Testing Guide](TESTING.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+
+---
+
 ## 📁 Project Structure
 
 ```

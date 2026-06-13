@@ -10,23 +10,13 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { calcScore, transportScores, foodScores, wasteScores } from '../utils/carbonCalculator';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL;
 
 const steps = ['Transport', 'Electricity & Food', 'Waste & Submit'];
 
-// Local calculation (mirrors backend logic)
-const transportScores = { bike: 10, train: 25, bus: 30, car: 70, flight: 100 };
-const foodScores      = { veg: 20, mixed: 50, nonveg: 80 };
-const wasteScores     = { low: 10, medium: 30, high: 50 };
-
-function calcScore(transport, electricity, food, waste) {
-  const t = transportScores[transport] || 0;
-  const e = (parseFloat(electricity) || 0) * 0.85;
-  const f = foodScores[food] || 0;
-  const w = wasteScores[waste] || 0;
-  return parseFloat((t + e + f + w).toFixed(2));
-}
+// Calculations are now imported from utils
 
 function getScoreLabel(score) {
   if (score < 100) return { label: 'Excellent 🌿', color: 'success' };
@@ -106,8 +96,8 @@ function Calculator() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Typography variant="h6">How do you primarily commute?</Typography>
             <FormControl fullWidth required>
-              <InputLabel>Transportation Mode</InputLabel>
-              <Select id="transport-select" value={transport} label="Transportation Mode" onChange={(e) => setTransport(e.target.value)}>
+              <InputLabel id="transport-label">Transportation Mode</InputLabel>
+              <Select labelId="transport-label" id="transport-select" aria-label="Transportation Mode" value={transport} label="Transportation Mode" onChange={(e) => setTransport(e.target.value)}>
                 <MenuItem value="bike">🚴 Bike</MenuItem>
                 <MenuItem value="bus">🚌 Bus</MenuItem>
                 <MenuItem value="train">🚆 Train</MenuItem>
@@ -126,14 +116,15 @@ function Calculator() {
             <TextField
               id="electricity-input"
               label="Monthly Electricity Usage (kWh/Units)"
+              aria-label="Monthly Electricity Usage"
               type="number"
               fullWidth
               value={electricity}
               onChange={(e) => setElectricity(e.target.value)}
             />
             <FormControl fullWidth required>
-              <InputLabel>Food Habits</InputLabel>
-              <Select id="food-select" value={food} label="Food Habits" onChange={(e) => setFood(e.target.value)}>
+              <InputLabel id="food-label">Food Habits</InputLabel>
+              <Select labelId="food-label" id="food-select" aria-label="Food Habits" value={food} label="Food Habits" onChange={(e) => setFood(e.target.value)}>
                 <MenuItem value="veg">🥦 Vegetarian</MenuItem>
                 <MenuItem value="mixed">🍱 Mixed Diet</MenuItem>
                 <MenuItem value="nonveg">🍖 Non-Vegetarian</MenuItem>
@@ -151,8 +142,8 @@ function Calculator() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Typography variant="h6">Waste Generation</Typography>
             <FormControl fullWidth required>
-              <InputLabel>Waste Level</InputLabel>
-              <Select id="waste-select" value={waste} label="Waste Level" onChange={(e) => setWaste(e.target.value)}>
+              <InputLabel id="waste-label">Waste Level</InputLabel>
+              <Select labelId="waste-label" id="waste-select" aria-label="Waste Level" value={waste} label="Waste Level" onChange={(e) => setWaste(e.target.value)}>
                 <MenuItem value="low">♻️ Low</MenuItem>
                 <MenuItem value="medium">🗑️ Medium</MenuItem>
                 <MenuItem value="high">⚠️ High</MenuItem>
@@ -163,6 +154,7 @@ function Calculator() {
               <Button variant="outlined" onClick={handleBack}>← Back</Button>
               <Button
                 id="calculate-btn"
+                aria-label="Calculate Carbon Footprint"
                 variant="contained"
                 disabled={!waste || loading}
                 onClick={handleSubmit}

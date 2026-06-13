@@ -1,20 +1,16 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import {
   Box, Typography, Container, Grid, Paper,
   CircularProgress, Alert, LinearProgress, Chip
 } from '@mui/material';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar
-} from 'recharts';
-import {
   collection, query, where, getDocs, limit
 } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { transportScores, foodScores, wasteScores } from '../utils/carbonCalculator';
 
-const COLORS = ['#2E7D32', '#66BB6A', '#FFA726', '#EF5350'];
+const CarbonCharts = React.lazy(() => import('../components/CarbonCharts'));
 
 function greenScore(score) {
   // Convert raw score to 0-100 green score (lower footprint = higher green score)
@@ -77,31 +73,33 @@ function Dashboard() {
     fetchRecords();
   }, [authReady, user]);
 
-  // Derived metrics
-  const latestScore = records[0]?.score ?? 0;
-  const gs = greenScore(latestScore);
-  const avgScore = records.length
-    ? Math.round(records.reduce((a, r) => a + r.score, 0) / records.length)
-    : 0;
+  // Derived metrics with useMemo
+  const latestScore = useMemo(() => records[0]?.score ?? 0, [records]);
+  const gs = useMemo(() => greenScore(latestScore), [latestScore]);
+  const avgScore = useMemo(() => {
+    return records.length
+      ? Math.round(records.reduce((a, r) => a + r.score, 0) / records.length)
+      : 0;
+  }, [records]);
 
-  // Chart data — reverse so oldest first
-  const trendData = [...records].reverse().map((r, i) => ({
-    name: r.date || `Entry ${i + 1}`,
-    score: r.score,
-  }));
-
-  // Breakdown of latest record for Pie chart
-  const transportScores = { bike: 10, train: 25, bus: 30, car: 70, flight: 100 };
-  const foodScores      = { veg: 20, mixed: 50, nonveg: 80 };
-  const wasteScores     = { low: 10, medium: 30, high: 50 };
+  // Chart data
+  const trendData = useMemo(() => {
+    return [...records].reverse().map((r, i) => ({
+      name: r.date || `Entry ${i + 1}`,
+      score: r.score,
+    }));
+  }, [records]);
 
   const latest = records[0];
-  const pieData = latest ? [
-    { name: 'Transport',    value: transportScores[latest.transport] || 0 },
-    { name: 'Electricity',  value: parseFloat((latest.electricity * 0.85).toFixed(1)) },
-    { name: 'Food',         value: foodScores[latest.food] || 0 },
-    { name: 'Waste',        value: wasteScores[latest.waste] || 0 },
-  ] : [];
+  const pieData = useMemo(() => {
+    if (!latest) return [];
+    return [
+      { name: 'Transport',    value: transportScores[latest.transport] || 0 },
+      { name: 'Electricity',  value: parseFloat((latest.electricity * 0.85).toFixed(1)) },
+      { name: 'Food',         value: foodScores[latest.food] || 0 },
+      { name: 'Waste',        value: wasteScores[latest.waste] || 0 },
+    ];
+  }, [latest]);
 
   if (loading) {
     return (
@@ -168,75 +166,9 @@ function Dashboard() {
           </Paper>
         </Grid>
 
-        {/* Trend Line Chart */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={3} sx={{ p: 3, height: 320 }}>
-            <Typography variant="h6" gutterBottom>📈 Score Trend</Typography>
-            {trendData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="90%">
-                <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#2E7D32"
-                    strokeWidth={3}
-                    dot={{ r: 5 }}
-                    activeDot={{ r: 8 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
-                <Typography color="text.secondary">No data yet — use the Calculator first!</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Pie Chart */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={3} sx={{ p: 3, height: 320 }}>
-            <Typography variant="h6" gutterBottom>🥧 Latest Breakdown</Typography>
-            {pieData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="90%">
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label>
-                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
-                <Typography color="text.secondary">No data yet</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Bar chart of all scores */}
-        {trendData.length > 1 && (
-          <Grid item xs={12}>
-            <Paper elevation={3} sx={{ p: 3, height: 280 }}>
-              <Typography variant="h6" gutterBottom>📊 Score History</Typography>
-              <ResponsiveContainer width="100%" height="85%">
-                <BarChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="score" fill="#2E7D32" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Paper>
-          </Grid>
-        )}
+        <Suspense fallback={<Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
+          <CarbonCharts trendData={trendData} pieData={pieData} />
+        </Suspense>
       </Grid>
     </Container>
   );
